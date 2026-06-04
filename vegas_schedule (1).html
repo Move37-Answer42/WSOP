@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Vegas Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--s1:#111;--s2:#1a1a1a;
+  --b1:#252525;--b2:#333;
+  --t1:#f0f0f0;--t2:#888;--t3:#444;
+  --gold:#F5C518;--cyan:#00C8FF;--orange:#FF7A30;--violet:#B044FF;
+  --wynn:#00D4AA;--ven:#8060E0;--aria:#4CAF50;--sp:#888;
+  --bar:4px;--r:10px;
+}
+body{background:var(--bg);color:var(--t1);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.4;min-height:100vh;overflow-x:hidden}
+.app{max-width:440px;margin:0 auto;padding-bottom:48px}
+
+/* HEADER */
+.hdr{padding:20px 16px 16px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:flex-end}
+.hl-eye{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.hl-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.04em;line-height:1}
+.hl-sub{font-size:11px;color:var(--t2);margin-top:4px}
+.hr-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;text-align:right;margin-bottom:2px}
+.hr-clock{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--gold)}
+
+/* DAY TABS */
+.tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:8px 12px;cursor:pointer;text-align:center;min-width:56px;transition:all .15s;user-select:none}
+.tab:active{transform:scale(.96)}
+.tab.active{background:var(--gold);border-color:var(--gold)}
+.tab-d{font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.tab.active .tab-d{color:rgba(0,0,0,.5)}
+.tab-n{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--t1);line-height:1}
+.tab.active .tab-n{color:#080808}
+
+/* PROGRESS */
+.progress{margin:12px 16px 0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px}
+.pr-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.pr-bar{flex:1;height:4px;background:var(--b2);border-radius:2px;overflow:hidden}
+.pr-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s ease}
+.pr-days{font-family:'DM Mono',monospace;font-size:9px;color:var(--t2);white-space:nowrap}
+
+/* DAY VIEW */
+.dv{display:none;padding:16px}
+.dv.active{display:block}
+.dv-hdr{margin-bottom:18px}
+.dv-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.dv-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;line-height:1;margin-bottom:4px}
+.dv-sub{font-size:12px;color:var(--t2);font-weight:300}
+
+/* SECTION */
+.sec{margin-bottom:18px}
+.sec-lbl{display:flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:9px}
+.s-alive .sec-lbl{color:var(--cyan)}
+.s-pick  .sec-lbl{color:var(--gold)}
+.s-bust  .sec-lbl{color:var(--orange)}
+.s-late  .sec-lbl{color:var(--violet)}
+.s-last  .sec-lbl{color:var(--t3)}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--b1);border-left:var(--bar) solid;border-radius:var(--r);padding:13px 14px;margin-bottom:9px;position:relative;max-height:600px;overflow:hidden;transition:border-color .2s,box-shadow .2s,max-height .3s ease,opacity .3s ease,margin .3s ease,padding .3s ease}
+.c-pick   {border-left-color:var(--gold)}
+.c-alive  {border-left-color:var(--cyan)}
+.c-check  {border-left-color:var(--orange)}
+.c-waiting{border-left-color:var(--b2);opacity:.5}
+.c-done   {border-left-color:var(--b2);opacity:.38}
+.c-bust   {border-left-color:var(--orange)}
+.c-late   {border-left-color:var(--violet)}
+.c-wynn   {border-left-color:var(--wynn)}
+.c-ven    {border-left-color:var(--ven)}
+.c-aria   {border-left-color:var(--aria)}
+.c-sp     {border-left-color:var(--sp)}
+.c-mgm    {border-left-color:#c8a400}
+.c-gn     {border-left-color:#888}
+.c-wsop   {border-left-color:var(--gold)}
+
+.card.is-active{border-color:var(--cyan)!important;border-left-color:var(--cyan)!important;box-shadow:0 0 0 1px var(--cyan)}
+.card.is-gone{max-height:0!important;padding:0!important;margin-bottom:0!important;opacity:0;pointer-events:none}
+
+/* pulse */
+.pulse{position:absolute;top:11px;right:12px;width:7px;height:7px;border-radius:50%;background:var(--cyan);display:none}
+.is-active .pulse{display:block;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.6)}}
+
+/* card internals */
+.c-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.c-nw{flex:1}
+.c-enum{font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:2px}
+.c-name{font-size:14px;font-weight:600;color:var(--t1);line-height:1.25}
+.c-pick .c-name{color:var(--gold)}
+.is-active .c-name{color:var(--cyan)!important}
+.c-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--t2);white-space:nowrap;flex-shrink:0}
+.c-pick .c-price{color:var(--gold)}
+.is-active .c-price{color:var(--cyan)!important}
+
+.c-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.bdg{font-family:'DM Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:4px}
+.bdg-wsop{background:var(--gold);color:#080808}
+.bdg-wynn{background:var(--wynn);color:#080808}
+.bdg-ven{background:var(--ven);color:#f0f0f0}
+.bdg-aria{background:var(--aria);color:#080808}
+.bdg-sp{background:#2a2a2a;color:#888;border:1px solid #333}
+.bdg-mgm{background:#2a2200;color:#c8a400}
+.bdg-gn{background:#1a1a1a;color:#666;border:1px solid #2a2a2a}
+.c-time,.c-lr{font-family:'DM Mono',monospace;font-size:10px;color:var(--t2)}
+.c-note{font-size:11px;color:var(--t3);line-height:1.45;border-top:1px solid var(--b1);padding-top:8px;margin-top:4px}
+.c-alive .c-note{color:rgba(0,200,255,.55)}
+.status-tag{font-family:'DM Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.08em}
+
+/* countdown */
+.cd{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px;background:rgba(245,197,24,.1);color:var(--gold);border:1px solid rgba(245,197,24,.2)}
+.cd.closed{background:rgba(255,122,48,.1);color:var(--orange);border-color:rgba(255,122,48,.2)}
+
+/* buttons */
+.c-actions{display:flex;gap:6px;margin-top:10px}
+.btn-in{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);cursor:pointer;transition:all .15s;text-align:center}
+.btn-in:hover{border-color:var(--gold);color:var(--gold)}
+.btn-in.on{background:rgba(0,200,255,.08);border-color:var(--cyan);color:var(--cyan)}
+.btn-cal{background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:9px 10px;font-size:13px;cursor:pointer;line-height:1;color:var(--t2);transition:all .15s}
+.btn-cal:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-x{background:transparent;border:1px solid var(--b1);border-radius:6px;padding:9px 10px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;color:var(--t3);line-height:1;transition:all .15s}
+.btn-x:hover{border-color:var(--orange);color:var(--orange)}
+.btn-in:active,.btn-cal:active,.btn-x:active{transform:scale(.96)}
+
+.empty{font-size:12px;color:var(--t3);font-style:italic;padding:10px 14px;border:1px dashed var(--b1);border-radius:var(--r);margin-bottom:9px}
+
+/* notif */
+.notif{display:none;margin:12px 16px 0;background:#0a1a1f;border:1px solid rgba(0,200,255,.2);border-radius:8px;padding:10px 14px;align-items:center;justify-content:space-between;gap:10px}
+.notif.show{display:flex}
+.notif span{font-size:12px;color:var(--cyan)}
+.notif button{background:var(--cyan);color:#080808;border:none;border-radius:5px;padding:5px 11px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.08em;cursor:pointer}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.dv.active .card{animation:fadeUp .25s ease both}
+.dv.active .sec:nth-child(1) .card{animation-delay:.03s}
+.dv.active .sec:nth-child(2) .card{animation-delay:.08s}
+.dv.active .sec:nth-child(3) .card:nth-child(2){animation-delay:.13s}
+.dv.active .sec:nth-child(3) .card:nth-child(3){animation-delay:.18s}
+.dv.active .sec:nth-child(4) .card{animation-delay:.21s}
+
+footer{padding:20px 16px;text-align:center;font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;border-top:1px solid var(--b1)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div>
+    <div class="hl-eye">WSOP 2026 · Las Vegas</div>
+    <div class="hl-name">Vegas Schedule</div>
+    <div class="hl-sub">FourtyTwo &nbsp;·&nbsp; Jun 4 – Jun 12</div>
+  </div>
+  <div>
+    <div class="hr-lbl">Las Vegas</div>
+    <div class="hr-clock" id="clock">··:·· ··</div>
+  </div>
+</div>
+
+<div class="notif" id="notif">
+  <span>Enable late-reg reminders?</span>
+  <button id="btnNotif">ALLOW</button>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="progress">
+  <span class="pr-lbl">Trip</span>
+  <div class="pr-bar"><div class="pr-fill" id="prFill" style="width:0%"></div></div>
+  <span class="pr-days" id="prDays">Day 1 of 9</span>
+</div>
+
+<div id="views"></div>
+<footer>All times PDT · Las Vegas · wsop.com for restart times</footer>
+</div>
+
+<script>
+// ── EVENTS ──────────────────────────────────────────────
+const EV={
+  ms1b:{id:'ms1b',n:'Monster Stack Day 1B',num:'#18',p:'$1,500',v:'wsop',date:'2026-06-04',start:'10:00 AM',lr:'~10:30 PM',lrH:22.5,note:'60-min levels · 50,000 chips · ~120BB: seat by ~12:20pm (Level 3) · ~60BB: seat by ~6:40pm (Level 6) · tonight: late entry = ~20BB, shove stack'},
+  wynn_fill:{id:'wynn_fill',n:'Summer Classic NLH',p:'~$1,100',v:'wynn',start:'12:00 PM',lr:'~4:30 PM',lrH:16.5,note:'40-min levels (est.) · ~25,000 chips · ~120BB: seat by ~1:00pm (est.) · ~60BB: seat by ~2:20pm (est.) · check wynnpoker.com for today\'s event'},
+  ven300:{id:'ven300',n:'NLH $300K GTD #36 — Day 1',p:'$800',v:'ven',date:'2026-06-04',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,note:'40-min levels (est.) · ~25,000 chips · ~120BB: seat by ~12:00pm (est.) · ~60BB: seat by ~1:20pm (est.) · Runs Jun 3–6 · 2 bullets (under $1K) · Day 2 fires Jun 6'},
+  wsop_aft:{id:'wsop_aft',n:'Daily Deepstack NLH — Afternoon',p:'~$250',v:'wsop',start:'1:00 PM',note:'Non-bracelet side event · 30-min levels · 25,000 chips · check at the cage on the day'},
+  wsop_night:{id:'wsop_night',n:'Daily Deepstack NLH — Nightly',p:'~$200',v:'wsop',start:'10:00 PM',note:'Non-bracelet side event · 20-min turbo levels · 20,000 chips · check at the cage on the day'},
+  ven1m_1a:{id:'ven1m_1a',n:'NLH $1M GTD #37 — Day 1A',p:'$1,100',v:'ven',date:'2026-06-06',start:'~11:00 AM',lr:'~6:00 PM',lrH:18,note:'40-min levels (est.) · ~30,000 chips · ~120BB: seat by ~12:20pm (est.) · ~60BB: seat by ~2:20pm (est.) · Multi-flight Jun 6–10 · 1 bullet · Day 2 fires Jun 10'},
+  wynn_d2:{id:'wynn_d2',n:'Wynn $1.5M GTD — Day 2 (if advanced)',p:'—',v:'wynn',note:'Free continuation if you entered Wynn Jun 4 and bagged chips'},
+  ven300_5:{id:'ven300_5',n:'NLH $300K GTD #36 — still running',p:'$800 ×2',v:'ven',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,note:'40-min levels (est.) · ~25,000 chips · ~120BB: seat by ~12:00pm (est.) · ~60BB: seat by ~1:20pm (est.) · 2 bullets (under $1K)'},
+  freeze25:{id:'freeze25',n:'Freezeout NLH',num:'#25',p:'$500 ×2',v:'wsop',date:'2026-06-07',start:'10:00 AM',lr:'~5:00 PM',lrH:17,note:'30-min levels · 25,000 chips · ~120BB: seat by ~11:30am · ~60BB: seat by ~12:20pm · 2 bullets · no re-entry after bust'},
+  ven_daily:{id:'ven_daily',n:'DSC NLH Daily',p:'~$1,100',v:'ven',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,note:'40-min levels (est.) · ~30,000 chips · ~120BB: seat by ~12:20pm (est.) · ~60BB: seat by ~2:20pm (est.) · always on · good structure'},
+  mix28:{id:'mix28',n:'Deepstack Mixed NLH/PLO',num:'#28',p:'$600 ×2',v:'wsop',date:'2026-06-08',start:'10:00 AM',lr:'~6:00 PM',lrH:18,note:'30-min levels · 30,000 chips · ~120BB: seat by ~11:00am · ~60BB: seat by ~2:20pm · 2 bullets · mixed NLH/PLO'},
+  ven1m_d2:{id:'ven1m_d2',n:'Venetian $1M GTD — Day 2 (if advanced)',p:'—',v:'ven',note:'Free continuation if you entered Day 1 on Jun 6 and advanced'},
+  sp10:{id:'sp10',n:'$300K GTD NLH — Day 1',p:'$300 ×2',v:'sp',date:'2026-06-10',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,note:'$300 · 2 bullets · Day 2 fires Jun 11 · ~60BB: seat by ~2:10pm (est.)'},
+  aria11:{id:'aria11',n:'$500K GTD NLH',p:'$1,600',v:'aria',date:'2026-06-11',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,note:'40-min levels (est.) · ~30,000 chips · ~120BB: seat by ~12:20pm (est.) · ~60BB: seat by ~3:00pm (est.) · 1 bullet · great Aria room'},
+  sp11:{id:'sp11',n:'$300K GTD NLH — Day 2 (if advanced)',p:'—',v:'sp',note:'Free continuation from Jun 10 — conflicts with Aria, pick one'},
+  aria12:{id:'aria12',n:'$500K GTD NLH',p:'$1,600',v:'aria',date:'2026-06-12',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,note:'40-min levels (est.) · ~30,000 chips · ~120BB: seat by ~12:20pm (est.) · ~60BB: seat by ~3:00pm (est.) · 1 bullet · last day of the trip'},
+  ven_plo:{id:'ven_plo',n:'DSC PLO Event',p:'~$600–800',v:'ven',start:'~11:00 AM',note:'30–40 min levels (est.) · ~120BB: seat by ~11:30am (est.) · ~60BB: seat by ~12:30pm (est.) · Venetian DSC best PLO option all summer · check venetianlasvegas.com for exact dates'},
+};
+
+// ── DAYS ────────────────────────────────────────────────
+const DAYS=[
+  {i:0,date:'2026-06-04',day:'THU',num:'4',
+    title:'Monster Stack Day 1B',sub:'Late reg until 10:30pm. Cisco Live wraps today — buy in tonight.',
+    alive:null,
+    pick:['ms1b'],
+    bust:['wynn_fill','ven300','wsop_aft','wsop_night'],
+    last:['ven_plo']},
+  {i:1,date:'2026-06-05',day:'FRI',num:'5',
+    title:'Waiting Day',sub:'Day 1C fires today for other players. Day 2 comes Sunday.',
+    alive:{check:['ms1b'],cn:'waiting',n:'Monster Stack — Waiting for Day 2',num:'#18',v:'wsop',p:'—',note:'Day 2 fires Jun 7 after all four flights complete. Stay sharp.'},
+    pick:[],
+    bust:['wynn_d2','ven300_5','wsop_aft','wsop_night'],
+    last:['ven_plo']},
+  {i:2,date:'2026-06-06',day:'SAT',num:'6',
+    title:'Last Waiting Day',sub:'Day 1D fires today — the final flight. Day 2 fires tomorrow.',
+    alive:{check:['ms1b'],cn:'waiting',n:'Monster Stack — Day 2 fires tomorrow',num:'#18',v:'wsop',p:'—',note:'Last Day 1 flight fires today. You play Day 2 tomorrow Jun 7.'},
+    pick:['ven1m_1a'],
+    bust:['wynn_fill','wsop_aft','wsop_night'],
+    last:['ven_plo']},
+  {i:3,date:'2026-06-07',day:'SUN',num:'7',
+    title:'Monster Stack Day 2',sub:'All four flights merge today. This is it.',
+    alive:{check:['ms1b'],cn:'now',n:'Monster Stack Day 2 — ALL FLIGHTS MERGE TODAY',num:'#18',v:'wsop',p:'—',note:'Every player from every Day 1 flight is in one field. 60-min levels. Check wsop.com for restart time.'},
+    pick:['freeze25'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:4,date:'2026-06-08',day:'MON',num:'8',
+    title:'Monster Stack Day 3',sub:'If you survived Day 2, money is close.',
+    alive:{check:['ms1b'],cn:'check',n:'Monster Stack — Day 3 may fire today',num:'#18',v:'wsop',p:'—',note:'If you survived Day 2 — Day 3 may fire today. Check wsop.com. If still alive this is your whole day.'},
+    pick:['mix28'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:5,date:'2026-06-09',day:'TUE',num:'9',
+    title:'Monster Stack Day 4',sub:'Deep run territory. Or pick up a live Venetian event.',
+    alive:{check:['ms1b'],cn:'check',n:'Monster Stack — Day 4 / Final Table',num:'#18',v:'wsop',p:'—',note:'If you\'re still alive — today could be your payday. Check wsop.com for schedule.'},
+    pick:['ven1m_d2'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:6,date:'2026-06-10',day:'WED',num:'10',
+    title:'South Point Day 1',sub:'Cheap bracelet-style event. Day 2 fires tomorrow.',
+    alive:null,
+    pick:['sp10'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:7,date:'2026-06-11',day:'THU',num:'11',
+    title:'Aria $500K GTD',sub:'Proper tournament. One bullet. Great room.',
+    alive:{check:['sp10'],cn:'waiting',n:'South Point $300K GTD — Day 2 (if advanced)',v:'sp',p:'—',note:'Conflicts with Aria — pick one. Aria is the stronger play.'},
+    pick:['aria11'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:8,date:'2026-06-12',day:'FRI',num:'12',
+    title:'Aria $500K GTD',sub:'Last day of the trip. Go out swinging.',
+    alive:null,
+    pick:['aria12'],
+    bust:['ven_daily'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+];
+
+// ── STATE ────────────────────────────────────────────────
+const SK='vs26_jun4';
+let ST=(()=>{try{return JSON.parse(localStorage.getItem(SK))||{};}catch{return{};}})();
+if(!ST.act)ST.act={};
+if(!ST.dim)ST.dim={};
+const save=()=>{try{localStorage.setItem(SK,JSON.stringify(ST));}catch{}};
+const isAct=id=>!!ST.act[id];
+const isDim=k=>!!ST.dim[k];
+const setAct=(id,v)=>{ST.act[id]=v;save();};
+const setDim=k=>{ST.dim[k]=true;save();};
+
+// ── CLOCK ────────────────────────────────────────────────
+const fmtC=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit',hour12:true});
+const tick=()=>{document.getElementById('clock').textContent=fmtC.format(new Date());};
+tick();setInterval(tick,10000);
+
+// ── PROGRESS ─────────────────────────────────────────────
+function updateProgress(dayI){
+  document.getElementById('prFill').style.width=((dayI/(DAYS.length-1))*100)+'%';
+  document.getElementById('prDays').textContent='Day '+(dayI+1)+' of '+DAYS.length;
+}
+
+// ── COUNTDOWN ────────────────────────────────────────────
+function countdown(ev){
+  if(!ev.lrH||!ev.date)return null;
+  const lvNow=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}));
+  const evDay=new Date(ev.date+'T12:00:00');
+  if(lvNow.toDateString()!==evDay.toDateString())return null;
+  const lr=new Date(ev.date+'T00:00:00');
+  lr.setHours(Math.floor(ev.lrH),Math.round((ev.lrH%1)*60),0,0);
+  const diff=lr-lvNow;
+  if(diff<=0)return'CLOSED';
+  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
+  return h>0?h+'h '+m+'m to late reg':m+'m to late reg';
+}
+
+// ── CALENDAR ─────────────────────────────────────────────
+function calUrl(ev){
+  if(!ev.date)return null;
+  const d=ev.date.replace(/-/g,'');
+  const lrH=ev.lrH||18;
+  const startH=17; // 10am PDT = 17:00 UTC
+  const endHutc=Math.floor(lrH)+7;
+  const endM=Math.round((lrH%1)*60);
+  // Handle midnight crossing — increment date if UTC hour >= 24
+  let endDate=d;
+  if(endHutc>=24){
+    const dt=new Date(ev.date+'T12:00:00');
+    dt.setDate(dt.getDate()+1);
+    endDate=dt.toISOString().slice(0,10).replace(/-/g,'');
+  }
+  const endH=String(endHutc%24).padStart(2,'0');
+  const endMs=String(endM).padStart(2,'0');
+  const venue=ev.v==='wsop'?'Horseshoe Las Vegas':ev.v==='wynn'?'Wynn Las Vegas':ev.v==='ven'?'The Venetian Las Vegas':ev.v==='aria'?'Aria Las Vegas':ev.v==='sp'?'South Point Hotel':'MGM Grand Las Vegas';
+  const t=encodeURIComponent((ev.num?'WSOP '+ev.num+' — ':'')+ev.n);
+  const det=encodeURIComponent('Buy-in: '+ev.p+'\nLate reg: '+(ev.lr||'TBC')+'\n'+(ev.note||''));
+  return'https://calendar.google.com/calendar/r/eventedit?text='+t+'&dates='+d+'T'+String(startH).padStart(2,'0')+'0000Z/'+endDate+'T'+endH+endMs+'00Z&details='+det+'&location='+encodeURIComponent(venue);
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────
+async function reqNotif(){
+  if(!('Notification'in window))return;
+  try{
+    const p=await Notification.requestPermission();
+    ST.notifOk=p==='granted';save();
+    document.getElementById('notif').classList.remove('show');
+    if(p==='granted')schedNotifs();
+  }catch(e){}
+}
+function schedNotifs(){
+  try{
+    DAYS.forEach(day=>(day.pick||[]).forEach(eid=>{
+      if(!isAct(eid))return;
+      const ev=EV[eid];if(!ev.date||!ev.lrH)return;
+      const lvNow=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}));
+      const lr=new Date(ev.date+'T00:00:00');
+      lr.setHours(Math.floor(ev.lrH),Math.round((ev.lrH%1)*60),0,0);
+      const delay=lr-90*60000-lvNow;
+      if(delay>0&&delay<86400000)setTimeout(()=>{try{new Notification('⏰ 90min to late reg — '+ev.n,{body:ev.lr+' · '+ev.p});}catch(e){}},delay);
+    }));
+  }catch(e){}
+}
+document.getElementById('btnNotif').onclick=reqNotif;
+try{if(typeof Notification!=='undefined'&&Notification.permission==='granted'){ST.notifOk=true;schedNotifs();}}catch(e){}
+
+// ── RENDER ───────────────────────────────────────────────
+const BADGE={wsop:'bdg-wsop',wynn:'bdg-wynn',venetian:'bdg-ven',aria:'bdg-aria',sp:'bdg-sp',mgm:'bdg-mgm',gn:'bdg-gn'};
+const VNAME={wsop:'WSOP',wynn:'WYNN',venetian:'VENETIAN',aria:'ARIA',sp:'SOUTH POINT',mgm:'MGM',gn:'GN GRAND'};
+
+function badge(v){return'<span class="bdg '+(BADGE[v]||'bdg-sp')+'">'+(VNAME[v]||v.toUpperCase())+'</span>';}
+
+function renderCard(ev,dayI,cls,showBtn,showX,isPick){
+  const id='c_'+dayI+'_'+ev.id;
+  const act=isAct(ev.id);
+  const gone=isDim(dayI+'_'+ev.id);
+  const cd=isPick?countdown(ev):null;
+  const url=ev.date?calUrl(ev):null;
+
+  const cdHtml=cd?'<span class="cd'+(cd==='CLOSED'?' closed':'')+'" id="cd_'+dayI+'_'+ev.id+'">'+(cd==='CLOSED'?'REG CLOSED':'⏱ '+cd)+'</span>':'';
+
+  const btns=showBtn?'<div class="c-actions"><button class="btn-in'+(act?' on':'')+'" onclick="toggleAct(\''+ev.id+'\',this)">'+(act?'✓ PLAYING':"I'M IN")+'</button>'+(url?'<button class="btn-cal" onclick="window.open(\''+url+'\',\'_blank\')" title="Add to Google Calendar">📅</button>':'')+( showX?'<button class="btn-x" onclick="dimCard('+dayI+',\''+ev.id+'\')">✕</button>':'')+'</div>':'';
+
+  return'<div class="card '+cls+(act?' is-active':'')+(gone?' is-gone':'')+'" id="'+id+'"><div class="pulse"></div><div class="c-top"><div class="c-nw">'+(ev.num?'<div class="c-enum">WSOP EVENT '+ev.num+'</div>':'' )+'<div class="c-name">'+ev.n+'</div></div><div class="c-price">'+ev.p+'</div></div><div class="c-meta">'+badge(ev.v)+(ev.start?'<span class="c-time">▶ '+ev.start+'</span>':'')+(ev.lr?'<span class="c-lr">⏰ Late reg '+ev.lr+'</span>':'')+cdHtml+'</div>'+(ev.note?'<div class="c-note">'+ev.note+'</div>':'') +btns+'</div>';
+}
+
+function renderAlive(alive){
+  if(!alive)return'';
+  const anyAct=alive.check.some(id=>isAct(id));
+  if(!anyAct)return'<div class="sec s-alive"><div class="sec-lbl"><span>▶</span> Still alive in</div><div class="empty">Nothing activated — fresh start</div></div>';
+  const cn=alive.cn;
+  let cls='',tag='';
+  if(cn==='now'){cls='c-alive';tag='<span class="status-tag" style="color:var(--cyan)">DAY CONTINUES TODAY ▶</span>';}
+  else if(cn==='check'){cls='c-check';tag='<span class="status-tag" style="color:var(--orange)">MAY FIRE TODAY — CHECK WSOP.COM</span>';}
+  else if(cn==='waiting'){cls='c-waiting';tag='<span class="status-tag" style="color:var(--t3)">WAITING — NOT TODAY</span>';}
+  else{cls='c-done';tag='<span class="status-tag" style="color:var(--t3)">NO CONTINUATION</span>';}
+  return'<div class="sec s-alive"><div class="sec-lbl"><span>▶</span> Still alive in</div><div class="card '+cls+'"><div class="c-top"><div class="c-nw">'+(alive.num?'<div class="c-enum">WSOP EVENT '+alive.num+'</div>':'' )+'<div class="c-name">'+alive.n+'</div></div><div class="c-price">'+alive.p+'</div></div><div class="c-meta">'+badge(alive.v)+tag+'</div><div class="c-note">'+alive.note+'</div></div></div>';
+}
+
+function renderDay(day){
+  const overallDay=day.i+1;
+  const pickHtml=day.pick&&day.pick.length?day.pick.map(id=>renderCard(EV[id],day.i,'c-pick c-'+EV[id].v,true,false,true)).join(''):'<div class="empty">Free day — choose from options below</div>';
+  const bustHtml=day.bust.map(id=>renderCard(EV[id],day.i,'c-'+EV[id].v,true,true,false)).join('');
+  const lastHtml=(day.last||[]).map(id=>renderCard(EV[id],day.i,'c-'+EV[id].v,false,true,false)).join('');
+  return'<div class="dv'+(day.i===0?' active':'')+'" id="dv_'+day.i+'"><div class="dv-hdr"><div class="dv-num">'+day.day+' · '+day.date.slice(5)+' · Day '+overallDay+' of '+DAYS.length+'</div><div class="dv-title">'+day.title+'</div><div class="dv-sub">'+day.sub+'</div></div>'+renderAlive(day.alive)+'<div class="sec s-pick"><div class="sec-lbl"><span>★</span> Today\'s pick</div>'+pickHtml+'</div>'+(bustHtml?'<div class="sec s-bust"><div class="sec-lbl"><span>↺</span> Alternatives</div>'+bustHtml+'</div>':'')+(lastHtml?'<div class="sec s-last"><div class="sec-lbl"><span>↓</span> Last resort</div>'+lastHtml+'</div>':'')+'</div>';
+}
+
+// ── ACTIONS ──────────────────────────────────────────────
+function toggleAct(evId,btn){
+  const cur=isAct(evId);
+  setAct(evId,!cur);
+  document.querySelectorAll('[id^="c_"][id$="_'+evId+'"]').forEach(c=>{
+    if(!cur)c.classList.add('is-active');else c.classList.remove('is-active');
+  });
+  document.querySelectorAll('.btn-in').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+evId+"'")){
+      if(!cur){b.textContent='✓ PLAYING';b.classList.add('on');}
+      else{b.textContent="I'M IN";b.classList.remove('on');}
+    }
+  });
+  if(!cur){
+    try{if(!ST.notifOk&&typeof Notification!=='undefined'&&Notification.permission==='default')document.getElementById('notif').classList.add('show');}catch(e){}
+    try{if(ST.notifOk||(typeof Notification!=='undefined'&&Notification.permission==='granted'))schedNotifs();}catch(e){}
+  }
+}
+
+function dimCard(dayI,evId){
+  setDim(dayI+'_'+evId);
+  const c=document.getElementById('c_'+dayI+'_'+evId);
+  if(c)c.classList.add('is-gone');
+}
+
+// ── INIT ─────────────────────────────────────────────────
+let activeDay=0;
+
+function switchDay(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  const prev=document.getElementById('dv_'+activeDay);
+  const next=document.getElementById('dv_'+i);
+  if(prev)prev.classList.remove('active');
+  next.querySelectorAll('.card:not(.is-gone)').forEach(c=>{c.style.animation='none';c.offsetHeight;c.style.animation='';});
+  next.classList.add('active');
+  updateProgress(i);
+  activeDay=i;
+}
+
+// Build tabs
+const tabsEl=document.getElementById('tabs');
+DAYS.forEach((day,i)=>{
+  const t=document.createElement('div');
+  t.className='tab'+(i===0?' active':'');
+  t.innerHTML='<div class="tab-d">'+day.day+'</div><div class="tab-n">'+day.num+'</div>';
+  t.onclick=()=>switchDay(i);
+  tabsEl.appendChild(t);
+});
+
+// Build views
+document.getElementById('views').innerHTML=DAYS.map(renderDay).join('');
+
+// Restore dismissed
+DAYS.forEach(day=>{
+  (day.bust||[]).concat(day.late||[]).concat(day.last||[]).forEach(eid=>{
+    if(isDim(day.i+'_'+eid)){
+      const c=document.getElementById('c_'+day.i+'_'+eid);
+      if(c)c.classList.add('is-gone');
+    }
+  });
+});
+
+// Restore activated styles
+Object.keys(ST.act).forEach(evId=>{
+  if(!ST.act[evId])return;
+  document.querySelectorAll('[id^="c_"][id$="_'+evId+'"]').forEach(c=>c.classList.add('is-active'));
+});
+
+// Countdown updates
+setInterval(()=>{
+  DAYS.forEach(day=>(day.pick||[]).forEach(eid=>{
+    const ev=EV[eid];const cd=countdown(ev);if(!cd)return;
+    const pill=document.getElementById('cd_'+day.i+'_'+eid);
+    if(pill){pill.textContent=cd==='CLOSED'?'REG CLOSED':'⏱ '+cd;pill.className='cd'+(cd==='CLOSED'?' closed':'');}
+  }));
+},60000);
+
+// Auto-jump to today
+const lvNow=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}));
+DAYS.forEach((day,i)=>{
+  const d=new Date(day.date+'T12:00:00');
+  if(lvNow.toDateString()===d.toDateString())setTimeout(()=>switchDay(i),80);
+});
+
+updateProgress(0);
+</script>
+</body>
+</html>
