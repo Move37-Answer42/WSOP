@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Vegas Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--s1:#161616;--s2:#202020;
+  --b1:#2e2e2e;--b2:#3e3e3e;
+  --t1:#f2f2f2;--t2:#aaaaaa;--t3:#888888;
+  --gold:#F5C518;--cyan:#00C8FF;--orange:#FF7A30;--violet:#B044FF;
+  --wynn:#00D4AA;--ven:#9070E8;--aria:#4CAF50;--sp:#8888aa;
+  --bar:4px;--r:10px;
+}
+body{background:var(--bg);color:var(--t1);font-family:'Outfit',sans-serif;font-size:15px;line-height:1.45;min-height:100vh;overflow-x:hidden}
+.app{max-width:440px;margin:0 auto;padding-bottom:52px}
+
+/* HEADER */
+.hdr{padding:20px 16px 16px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:flex-end}
+.hl-eye{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.hl-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.04em;line-height:1}
+.hl-sub{font-size:12px;color:var(--t2);margin-top:4px}
+.hr-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;text-align:right;margin-bottom:2px}
+.hr-clock{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--gold)}
+
+/* DAY TABS */
+.tabs{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:8px 12px;cursor:pointer;text-align:center;min-width:56px;transition:all .15s;user-select:none}
+.tab:active{transform:scale(.96)}
+.tab.active{background:var(--gold);border-color:var(--gold)}
+.tab-d{font-family:'DM Mono',monospace;font-size:8px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.tab.active .tab-d{color:rgba(0,0,0,.5)}
+.tab-n{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--t1);line-height:1}
+.tab.active .tab-n{color:#080808}
+
+/* PROGRESS */
+.progress{margin:12px 16px 0;background:var(--s1);border:1px solid var(--b1);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px}
+.pr-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.pr-bar{flex:1;height:4px;background:var(--b2);border-radius:2px;overflow:hidden}
+.pr-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s ease}
+.pr-days{font-family:'DM Mono',monospace;font-size:9px;color:var(--t2);white-space:nowrap}
+
+/* DAY VIEW */
+.dv{display:none;padding:16px}
+.dv.active{display:block}
+.dv-hdr{margin-bottom:18px}
+.dv-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.dv-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;line-height:1;margin-bottom:5px}
+.dv-sub{font-size:13px;color:var(--t2);font-weight:300}
+
+/* SECTION */
+.sec{margin-bottom:20px}
+.sec-lbl{display:flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;font-weight:500}
+.s-alive .sec-lbl{color:var(--cyan)}
+.s-pick  .sec-lbl{color:var(--gold)}
+.s-bust  .sec-lbl{color:var(--orange)}
+.s-last  .sec-lbl{color:var(--t3)}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--b1);border-left:var(--bar) solid;border-radius:var(--r);padding:14px 16px;margin-bottom:10px;position:relative;max-height:600px;overflow:hidden;transition:border-color .2s,box-shadow .2s,max-height .3s ease,opacity .3s ease,margin .3s ease,padding .3s ease}
+.c-pick   {border-left-color:var(--gold)}
+.c-alive  {border-left-color:var(--cyan)}
+.c-check  {border-left-color:var(--orange)}
+.c-waiting{border-left-color:var(--b2);opacity:.5}
+.c-wsop   {border-left-color:var(--gold)}
+.c-wynn   {border-left-color:var(--wynn)}
+.c-ven    {border-left-color:var(--ven)}
+.c-aria   {border-left-color:var(--aria)}
+.c-sp     {border-left-color:var(--sp)}
+
+.card.is-active{border-color:var(--cyan)!important;border-left-color:var(--cyan)!important;box-shadow:0 0 0 1px var(--cyan)}
+.card.is-used  {border-color:var(--orange)!important;border-left-color:var(--orange)!important;opacity:.7}
+.card.is-gone  {max-height:0!important;padding:0!important;margin-bottom:0!important;opacity:0;pointer-events:none}
+
+/* pulse */
+.pulse{position:absolute;top:12px;right:13px;width:7px;height:7px;border-radius:50%;background:var(--cyan);display:none}
+.is-active .pulse{display:block;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.6)}}
+
+/* card internals */
+.c-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:9px}
+.c-nw{flex:1}
+.c-enum{font-family:'DM Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.c-name{font-size:15px;font-weight:600;color:var(--t1);line-height:1.25}
+.c-pick .c-name{color:var(--gold)}
+.is-active .c-name{color:var(--cyan)!important}
+.is-used .c-name{color:var(--orange)!important}
+.c-price{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--t2);white-space:nowrap;flex-shrink:0}
+.c-pick .c-price{color:var(--gold)}
+.is-active .c-price{color:var(--cyan)!important}
+.is-used .c-price{color:var(--orange)!important}
+
+.c-meta{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.bdg{font-family:'DM Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.bdg-wsop{background:var(--gold);color:#080808}
+.bdg-wynn{background:var(--wynn);color:#080808}
+.bdg-ven{background:var(--ven);color:#f0f0f0}
+.bdg-aria{background:var(--aria);color:#080808}
+.bdg-sp{background:var(--s2);color:var(--sp);border:1px solid var(--b2)}
+.c-time,.c-lr{font-family:'DM Mono',monospace;font-size:11px;color:var(--t2)}
+.c-note{font-size:13px;color:var(--t2);line-height:1.5;border-top:1px solid var(--b1);padding-top:9px;margin-top:4px}
+.c-alive .c-note{color:rgba(0,200,255,.7)}
+.is-used .c-note{color:rgba(255,122,48,.6)}
+.status-tag{font-family:'DM Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.08em}
+
+/* countdown */
+.cd{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:3px 9px;border-radius:4px;background:rgba(245,197,24,.12);color:var(--gold);border:1px solid rgba(245,197,24,.25)}
+.cd.closed{background:rgba(255,122,48,.12);color:var(--orange);border-color:rgba(255,122,48,.25)}
+
+/* buttons */
+.c-actions{display:flex;gap:6px;margin-top:11px}
+.btn-in{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);cursor:pointer;transition:all .15s;text-align:center}
+.btn-in:hover{border-color:var(--gold);color:var(--gold)}
+.btn-in.on{background:rgba(0,200,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.btn-in.reload{background:rgba(245,197,24,.1);border-color:var(--gold);color:var(--gold)}
+.btn-in.used{background:rgba(255,122,48,.08);border-color:var(--orange);color:var(--orange);cursor:default}
+.btn-cal{background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:10px 11px;font-size:14px;cursor:pointer;line-height:1;color:var(--t2);transition:all .15s}
+.btn-cal:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-x{background:transparent;border:1px solid var(--b1);border-radius:6px;padding:10px 11px;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;color:var(--t3);line-height:1;transition:all .15s}
+.btn-x:hover{border-color:var(--orange);color:var(--orange)}
+.btn-in:active,.btn-cal:active,.btn-x:active{transform:scale(.96)}
+
+.empty{font-size:13px;color:var(--t3);font-style:italic;padding:11px 16px;border:1px dashed var(--b1);border-radius:var(--r);margin-bottom:10px}
+
+/* notif */
+.notif{display:none;margin:12px 16px 0;background:#0a1a1f;border:1px solid rgba(0,200,255,.2);border-radius:8px;padding:11px 14px;align-items:center;justify-content:space-between;gap:10px}
+.notif.show{display:flex}
+.notif span{font-size:13px;color:var(--cyan)}
+.notif button{background:var(--cyan);color:#080808;border:none;border-radius:5px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.08em;cursor:pointer}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.dv.active .card{animation:fadeUp .25s ease both}
+.dv.active .sec:nth-child(1) .card{animation-delay:.03s}
+.dv.active .sec:nth-child(2) .card{animation-delay:.08s}
+.dv.active .sec:nth-child(3) .card:nth-child(2){animation-delay:.13s}
+.dv.active .sec:nth-child(3) .card:nth-child(3){animation-delay:.18s}
+.dv.active .sec:nth-child(3) .card:nth-child(4){animation-delay:.22s}
+.dv.active .sec:nth-child(4) .card{animation-delay:.24s}
+
+footer{padding:20px 16px;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;border-top:1px solid var(--b1)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div>
+    <div class="hl-eye">WSOP 2026 · Las Vegas</div>
+    <div class="hl-name">Vegas Schedule</div>
+    <div class="hl-sub">FourtyTwo &nbsp;·&nbsp; Jun 4 – Jun 12</div>
+  </div>
+  <div>
+    <div class="hr-lbl">Las Vegas</div>
+    <div class="hr-clock" id="clock">··:·· ··</div>
+  </div>
+</div>
+
+<div class="notif" id="notif">
+  <span>Enable late-reg reminders?</span>
+  <button id="btnNotif">ALLOW</button>
+</div>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="progress">
+  <span class="pr-lbl">Trip</span>
+  <div class="pr-bar"><div class="pr-fill" id="prFill" style="width:0%"></div></div>
+  <span class="pr-days" id="prDays">Day 1 of 9</span>
+</div>
+
+<div id="views"></div>
+<footer>All times PDT · Las Vegas · wsop.com for restart times</footer>
+</div>
+
+<script>
+// ── EVENTS ──────────────────────────────────────────────
+// sb: true = single bullet (over $1K, no re-entry)
+const EV={
+  ms1:{id:'ms1',n:'Monster Stack — Day 1 Entry',num:'#18',p:'$1,500',v:'wsop',sb:true,date:'2026-06-04',start:'10:00 AM',lr:'~10:30 PM',lrH:22.5,
+    note:'Day 1 flights: 1B Jun 4 · 1C Jun 5 · 1D Jun 6 — 1 bullet across all flights · 60-min levels · 50,000 chips · ~120BB: seat by ~12:20pm · ~60BB: seat by ~6:40pm'},
+  wynn_fill:{id:'wynn_fill',n:'Summer Classic NLH',p:'~$1,100',v:'wynn',sb:true,start:'12:00 PM',lr:'~4:30 PM',lrH:16.5,
+    note:'40-min levels (est.) · ~25,000 chips · ~120BB: seat by ~1:00pm · ~60BB: seat by ~2:20pm · Check wynnpoker.com for today\'s event'},
+  ven300:{id:'ven300',n:'NLH $300K GTD',p:'$800',v:'ven',sb:false,date:'2026-06-04',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,
+    note:'Runs Jun 3–6 · 2 bullets (under $1K — reload if busted) · ~120BB: seat by ~12:00pm · ~60BB: seat by ~1:20pm'},
+  wsop_aft:{id:'wsop_aft',n:'Daily Deepstack NLH — Afternoon',p:'~$250',v:'wsop',sb:false,start:'1:00 PM',
+    note:'Non-bracelet side event · 30-min levels · 25,000 chips · Check cage at Horseshoe on the day'},
+  wsop_night:{id:'wsop_night',n:'Daily Deepstack NLH — Nightly',p:'~$200',v:'wsop',sb:false,start:'10:00 PM',
+    note:'Non-bracelet side event · 20-min turbo levels · 20,000 chips · Check cage at Horseshoe on the day'},
+  ven1m:{id:'ven1m',n:'NLH $1M GTD',p:'$1,100',v:'ven',sb:true,date:'2026-06-06',start:'~11:00 AM',lr:'~6:00 PM',lrH:18,
+    note:'Multi-flight Jun 6–10 · 1 bullet total across all flights · ~120BB: seat by ~12:20pm · ~60BB: seat by ~2:20pm · Day 2 fires Jun 10 after all flights complete'},
+  wynn_d2:{id:'wynn_d2',n:'Wynn $1.5M GTD — Day 2',p:'—',v:'wynn',sb:false,
+    note:'Free continuation — only if you entered Wynn Jun 4 and bagged chips'},
+  freeze25:{id:'freeze25',n:'Freezeout NLH',num:'#25',p:'$500',v:'wsop',sb:false,date:'2026-06-07',start:'10:00 AM',lr:'~5:00 PM',lrH:17,
+    note:'2 bullets (under $1K) · 1-day bracelet · no re-entry after final bust · ~120BB: seat by ~11:30am · ~60BB: seat by ~12:20pm'},
+  ven_daily:{id:'ven_daily',n:'DSC NLH Daily',p:'~$1,100',v:'ven',sb:true,start:'~11:00 AM',lr:'~5:00 PM',lrH:17,
+    note:'40-min levels (est.) · ~30,000 chips · ~120BB: seat by ~12:20pm · ~60BB: seat by ~2:20pm · Venetian runs events daily all summer'},
+  mix28:{id:'mix28',n:'Deepstack Mixed NLH/PLO',num:'#28',p:'$600',v:'wsop',sb:false,date:'2026-06-08',start:'10:00 AM',lr:'~6:00 PM',lrH:18,
+    note:'2 bullets (under $1K) · Mixed NLH/PLO · ~120BB: seat by ~11:00am · ~60BB: seat by ~2:20pm'},
+  ven1m_d2:{id:'ven1m_d2',n:'Venetian $1M GTD — Day 2',p:'—',v:'ven',sb:false,
+    note:'Free continuation — only if you entered $1M GTD and advanced · Day 2 fires Jun 10 after all flights'},
+  sp10:{id:'sp10',n:'$300K GTD NLH — Day 1',p:'$300',v:'sp',sb:false,date:'2026-06-10',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,
+    note:'2 bullets (under $1K) · Day 2 fires Jun 11 · ~60BB: seat by ~2:10pm (est.)'},
+  aria11:{id:'aria11',n:'$500K GTD NLH',p:'$1,600',v:'aria',sb:true,date:'2026-06-11',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,
+    note:'1 bullet · 40-min levels (est.) · ~120BB: seat by ~12:20pm · ~60BB: seat by ~3:00pm · Great Aria room'},
+  sp11:{id:'sp11',n:'$300K GTD — Day 2',p:'—',v:'sp',sb:false,
+    note:'Free continuation if you advanced from Jun 10 · conflicts with Aria — pick one · Aria is the stronger play'},
+  aria12:{id:'aria12',n:'$500K GTD NLH',p:'$1,600',v:'aria',sb:true,date:'2026-06-12',start:'~11:00 AM',lr:'~5:00 PM',lrH:17,
+    note:'1 bullet · 40-min levels (est.) · ~120BB: seat by ~12:20pm · ~60BB: seat by ~3:00pm · Last day of the trip'},
+  ven_plo:{id:'ven_plo',n:'DSC PLO Event',p:'~$600–800',v:'ven',sb:false,start:'~11:00 AM',
+    note:'Best PLO option all summer · ~120BB: seat by ~11:30am (est.) · ~60BB: seat by ~12:30pm (est.) · Check venetianlasvegas.com for exact dates'},
+};
+
+// ── DAYS ────────────────────────────────────────────────
+const DAYS=[
+  {i:0,date:'2026-06-04',day:'THU',num:'4',
+    title:'Monster Stack Day 1B',sub:'Late reg until 10:30pm — Cisco Live wraps today, buy in tonight.',
+    alive:null,
+    pick:['ms1'],
+    bust:['wynn_fill','ven300','wsop_aft','wsop_night'],
+    last:['ven_plo']},
+  {i:1,date:'2026-06-05',day:'FRI',num:'5',
+    title:'Waiting Day',sub:'Day 1C fires for other players today. Day 2 is Sunday.',
+    alive:{check:['ms1'],cn:'waiting',n:'Monster Stack — Waiting for Day 2',num:'#18',v:'wsop',p:'—',note:'Day 2 fires Jun 7 after all four flights complete. Stay sharp.'},
+    pick:[],
+    bust:['ms1','wynn_d2','wynn_fill','ven300','wsop_aft','wsop_night'],
+    last:['ven_plo']},
+  {i:2,date:'2026-06-06',day:'SAT',num:'6',
+    title:'Last Waiting Day',sub:'Day 1D fires today — final flight. Day 2 fires tomorrow.',
+    alive:{check:['ms1'],cn:'waiting',n:'Monster Stack — Day 2 fires tomorrow',num:'#18',v:'wsop',p:'—',note:'Last Day 1 flight fires today. You play Day 2 tomorrow Jun 7.'},
+    pick:['ven1m'],
+    bust:['ms1','wynn_fill','ven300','wsop_aft','wsop_night'],
+    last:['ven_plo']},
+  {i:3,date:'2026-06-07',day:'SUN',num:'7',
+    title:'Monster Stack Day 2',sub:'All four flights merge today. This is it.',
+    alive:{check:['ms1'],cn:'now',n:'Monster Stack Day 2 — ALL FLIGHTS MERGE TODAY',num:'#18',v:'wsop',p:'—',note:'Every Day 1 player in one field. 60-min levels. Check wsop.com for restart time.'},
+    pick:['freeze25'],
+    bust:['ven1m','ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:4,date:'2026-06-08',day:'MON',num:'8',
+    title:'Monster Stack Day 3',sub:'If you survived Day 2, money is close.',
+    alive:{check:['ms1'],cn:'check',n:'Monster Stack — Day 3 may fire today',num:'#18',v:'wsop',p:'—',note:'If you survived Day 2 — Day 3 may fire. Check wsop.com. If alive, that\'s your whole day.'},
+    pick:['mix28'],
+    bust:['ven1m','ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:5,date:'2026-06-09',day:'TUE',num:'9',
+    title:'Monster Stack Day 4',sub:'Deep run territory. Venetian $1M last entry today.',
+    alive:{check:['ms1'],cn:'check',n:'Monster Stack — Day 4 / Final Table',num:'#18',v:'wsop',p:'—',note:'If still alive — today could be your payday. Check wsop.com for schedule.'},
+    pick:[],
+    bust:['ven1m','ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:6,date:'2026-06-10',day:'WED',num:'10',
+    title:'South Point Day 1',sub:'Venetian $1M GTD Day 2 also fires today if you advanced.',
+    alive:{check:['ven1m'],cn:'now',n:'Venetian $1M GTD — Day 2 FIRES TODAY',num:null,v:'ven',p:'—',note:'All Day 1 flights converge today. Check venetianlasvegas.com for restart time. This is your priority if you advanced.'},
+    pick:['sp10'],
+    bust:['ven1m_d2','ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:7,date:'2026-06-11',day:'THU',num:'11',
+    title:'Aria $500K GTD',sub:'Proper tournament. One bullet. Great room.',
+    alive:{check:['sp10'],cn:'waiting',n:'South Point $300K — Day 2 (if advanced)',v:'sp',p:'—',note:'Conflicts with Aria — pick one. Aria is the stronger play.'},
+    pick:['aria11'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+  {i:8,date:'2026-06-12',day:'FRI',num:'12',
+    title:'Aria $500K GTD',sub:'Last day of the trip. Go out swinging.',
+    alive:null,
+    pick:['aria12'],
+    bust:['ven_daily','wynn_fill'],
+    last:['wsop_aft','wsop_night','ven_plo']},
+];
+
+// ── STATE ────────────────────────────────────────────────
+const SK='vs26_jun4_v3';
+let ST=(()=>{try{return JSON.parse(localStorage.getItem(SK))||{};}catch{return{};}})();
+if(!ST.act)ST.act={};
+if(!ST.dim)ST.dim={};
+const save=()=>{try{localStorage.setItem(SK,JSON.stringify(ST));}catch{}};
+const isAct=id=>!!ST.act[id];
+const isDim=k=>!!ST.dim[k];
+const setAct=(id,v)=>{ST.act[id]=v;save();};
+const setDim=k=>{ST.dim[k]=true;save();};
+
+// ── CLOCK ────────────────────────────────────────────────
+const fmtC=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit',hour12:true});
+const tick=()=>{document.getElementById('clock').textContent=fmtC.format(new Date());};
+tick();setInterval(tick,10000);
+
+// ── PROGRESS ─────────────────────────────────────────────
+function updateProgress(i){
+  document.getElementById('prFill').style.width=((i/(DAYS.length-1))*100)+'%';
+  document.getElementById('prDays').textContent='Day '+(i+1)+' of '+DAYS.length;
+}
+
+// ── COUNTDOWN ────────────────────────────────────────────
+function countdown(ev){
+  if(!ev.lrH||!ev.date)return null;
+  const lvNow=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}));
+  const evDay=new Date(ev.date+'T12:00:00');
+  if(lvNow.toDateString()!==evDay.toDateString())return null;
+  const lr=new Date(ev.date+'T00:00:00');
+  lr.setHours(Math.floor(ev.lrH),Math.round((ev.lrH%1)*60),0,0);
+  const diff=lr-lvNow;
+  if(diff<=0)return'CLOSED';
+  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
+  return h>0?h+'h '+m+'m to late reg':m+'m to late reg';
+}
+
+// ── CALENDAR ─────────────────────────────────────────────
+function calUrl(ev){
+  if(!ev.date)return null;
+  const d=ev.date.replace(/-/g,'');
+  const lrH=ev.lrH||18;
+  const endHutc=Math.floor(lrH)+7;
+  const endM=Math.round((lrH%1)*60);
+  let endDate=d;
+  if(endHutc>=24){
+    const dt=new Date(ev.date+'T12:00:00');dt.setDate(dt.getDate()+1);
+    endDate=dt.toISOString().slice(0,10).replace(/-/g,'');
+  }
+  const venue=({wsop:'Horseshoe Las Vegas',wynn:'Wynn Las Vegas',ven:'The Venetian Las Vegas',aria:'Aria Las Vegas',sp:'South Point Hotel'})[ev.v]||'Las Vegas';
+  const t=encodeURIComponent((ev.num?'WSOP '+ev.num+' — ':'')+ev.n);
+  const det=encodeURIComponent('Buy-in: '+ev.p+'\nLate reg: '+(ev.lr||'TBC')+'\n'+(ev.note||''));
+  return'https://calendar.google.com/calendar/r/eventedit?text='+t+'&dates='+d+'T170000Z/'+endDate+'T'+String(endHutc%24).padStart(2,'0')+String(endM).padStart(2,'0')+'00Z&details='+det+'&location='+encodeURIComponent(venue);
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────
+async function reqNotif(){
+  if(!('Notification'in window))return;
+  try{
+    const p=await Notification.requestPermission();
+    ST.notifOk=p==='granted';save();
+    document.getElementById('notif').classList.remove('show');
+    if(p==='granted')schedNotifs();
+  }catch(e){}
+}
+function schedNotifs(){
+  try{
+    DAYS.forEach(day=>(day.pick||[]).forEach(function(eid){
+      if(!isAct(eid))return;
+      var ev=EV[eid];if(!ev.date||!ev.lrH)return;
+      var lvN=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}));
+      var lr=new Date(ev.date+'T00:00:00');
+      lr.setHours(Math.floor(ev.lrH),Math.round((ev.lrH%1)*60),0,0);
+      var delay=lr-90*60000-lvN;
+      if(delay>0&&delay<86400000)setTimeout(function(){try{new Notification('⏰ 90min to late reg — '+ev.n,{body:ev.lr+' · '+ev.p});}catch(e){}},delay);
+    }));
+  }catch(e){}
+}
+document.getElementById('btnNotif').onclick=reqNotif;
+try{if(typeof Notification!=='undefined'&&Notification.permission==='granted'){ST.notifOk=true;schedNotifs();}}catch(e){}
+
+// ── RENDER ───────────────────────────────────────────────
+const BADGE={wsop:'bdg-wsop',wynn:'bdg-wynn',ven:'bdg-ven',aria:'bdg-aria',sp:'bdg-sp'};
+const VNAME={wsop:'WSOP',wynn:'WYNN',ven:'VENETIAN',aria:'ARIA',sp:'SOUTH POINT'};
+function badge(v){return'<span class="bdg '+(BADGE[v]||'bdg-sp')+'">'+(VNAME[v]||v.toUpperCase())+'</span>';}
+
+function renderCard(ev,dayI,cls,showBtn,showX,isPick){
+  const act=isAct(ev.id);
+  const gone=isDim(dayI+'_'+ev.id);
+  const used=act&&ev.sb; // single bullet already fired
+  const cd=isPick?countdown(ev):null;
+  const url=ev.date?calUrl(ev):null;
+  const cardCls='card '+cls+(used?' is-used':act?' is-active':'')+(gone?' is-gone':'');
+
+  const cdHtml=cd?'<span class="cd'+(cd==='CLOSED'?' closed':'')+'" id="cd_'+dayI+'_'+ev.id+'">'+(cd==='CLOSED'?'REG CLOSED':'⏱ '+cd)+'</span>':'';
+
+  let btnHtml='';
+  if(showBtn){
+    let btnClass='btn-in',btnText="I'M IN";
+    if(used){
+      btnClass='btn-in used';btnText='✓ USED — 1 BULLET';
+    } else if(act){
+      btnClass='btn-in on';btnText='✓ PLAYING';
+    } else if(!ev.sb&&act===false&&isAct(ev.id)===false){
+      // not activated yet, normal
+    }
+    // For multi-bullet events that are activated, offer reload
+    if(act&&!ev.sb){btnClass='btn-in reload';btnText='↺ RELOAD — ANOTHER BULLET';}
+
+    const calBtn=url?'<button class="btn-cal" onclick="window.open(\''+url+'\',\'_blank\')" title="Add to Google Calendar">📅</button>':'';
+    const xBtn=showX?'<button class="btn-x" onclick="dimCard('+dayI+',\''+ev.id+'\')">✕</button>':'';
+    const onclick=used?'toggleAct(\''+ev.id+'\',this)':act&&!ev.sb?'toggleAct(\''+ev.id+'\',this)':'toggleAct(\''+ev.id+'\',this)';
+    btnHtml='<div class="c-actions"><button class="'+btnClass+'" onclick="'+onclick+'">'+btnText+'</button>'+calBtn+xBtn+'</div>';
+  }
+
+  return'<div class="'+cardCls+'" id="c_'+dayI+'_'+ev.id+'"><div class="pulse"></div>'
+    +'<div class="c-top"><div class="c-nw">'+(ev.num?'<div class="c-enum">WSOP EVENT '+ev.num+'</div>':'')+'<div class="c-name">'+ev.n+'</div></div>'
+    +'<div class="c-price">'+ev.p+'</div></div>'
+    +'<div class="c-meta">'+badge(ev.v)+(ev.start?'<span class="c-time">▶ '+ev.start+'</span>':'')+(ev.lr?'<span class="c-lr">⏰ Late reg '+ev.lr+'</span>':'')+cdHtml+'</div>'
+    +(ev.note?'<div class="c-note">'+ev.note+'</div>':'')
+    +btnHtml+'</div>';
+}
+
+function renderAlive(alive){
+  if(!alive)return'';
+  const anyAct=alive.check.some(function(id){return isAct(id);});
+  if(!anyAct)return'<div class="sec s-alive"><div class="sec-lbl"><span>▶</span> Still alive in</div><div class="empty">Nothing activated yet — fresh start</div></div>';
+  const cn=alive.cn;
+  let cls='',tag='';
+  if(cn==='now'){cls='c-alive';tag='<span class="status-tag" style="color:var(--cyan)">DAY CONTINUES TODAY ▶</span>';}
+  else if(cn==='check'){cls='c-check';tag='<span class="status-tag" style="color:var(--orange)">MAY FIRE TODAY — CHECK WSOP.COM</span>';}
+  else{cls='c-waiting';tag='<span class="status-tag" style="color:var(--t3)">WAITING — NOT TODAY</span>';}
+  return'<div class="sec s-alive"><div class="sec-lbl"><span>▶</span> Still alive in</div>'
+    +'<div class="card '+cls+'"><div class="c-top"><div class="c-nw">'+(alive.num?'<div class="c-enum">WSOP EVENT '+alive.num+'</div>':'')
+    +'<div class="c-name">'+alive.n+'</div></div><div class="c-price">'+alive.p+'</div></div>'
+    +'<div class="c-meta">'+badge(alive.v)+tag+'</div><div class="c-note">'+alive.note+'</div></div></div>';
+}
+
+function renderDay(day){
+  const pickHtml=day.pick&&day.pick.length
+    ?day.pick.map(function(id){return renderCard(EV[id],day.i,'c-pick c-'+EV[id].v,true,false,true);}).join('')
+    :'<div class="empty">Free day — choose from options below</div>';
+  const bustHtml=day.bust.map(function(id){return renderCard(EV[id],day.i,'c-'+EV[id].v,true,true,false);}).join('');
+  const lastHtml=(day.last||[]).map(function(id){return renderCard(EV[id],day.i,'c-'+EV[id].v,false,true,false);}).join('');
+  return'<div class="dv'+(day.i===0?' active':'')+'" id="dv_'+day.i+'">'
+    +'<div class="dv-hdr"><div class="dv-num">'+day.day+' · '+day.date.slice(5)+' · Day '+(day.i+1)+' of '+DAYS.length+'</div>'
+    +'<div class="dv-title">'+day.title+'</div><div class="dv-sub">'+day.sub+'</div></div>'
+    +renderAlive(day.alive)
+    +'<div class="sec s-pick"><div class="sec-lbl"><span>★</span> Today\'s pick</div>'+pickHtml+'</div>'
+    +(bustHtml?'<div class="sec s-bust"><div class="sec-lbl"><span>↺</span> Alternatives</div>'+bustHtml+'</div>':'')
+    +(lastHtml?'<div class="sec s-last"><div class="sec-lbl"><span>↓</span> Last resort</div>'+lastHtml+'</div>':'')
+    +'</div>';
+}
+
+// ── ACTIONS ──────────────────────────────────────────────
+function refreshCard(evId){
+  var ev=EV[evId];
+  var act=isAct(evId);
+  var used=act&&ev.sb;
+  document.querySelectorAll('[id^="c_"][id$="_'+evId+'"]').forEach(function(card){
+    card.classList.toggle('is-active',act&&!ev.sb);
+    card.classList.toggle('is-used',used);
+    var btn=card.querySelector('.btn-in');
+    if(!btn)return;
+    if(used){btn.className='btn-in used';btn.textContent='✓ USED — 1 BULLET';}
+    else if(act&&!ev.sb){btn.className='btn-in reload';btn.textContent='↺ RELOAD — ANOTHER BULLET';}
+    else{btn.className='btn-in';btn.textContent="I'M IN";}
+    // Also update pulse
+    var pulse=card.querySelector('.pulse');
+    if(pulse)pulse.style.display=(act&&!ev.sb)?'block':'none';
+  });
+}
+
+function toggleAct(evId,btn){
+  var ev=EV[evId];
+  var cur=isAct(evId);
+  // Single bullet: toggle between unused and used
+  // Multi-bullet: always stays active once tapped (can't un-activate)
+  if(ev.sb){
+    setAct(evId,!cur);
+  } else {
+    setAct(evId,true); // multi-bullet: mark active, can always reload
+  }
+  refreshCard(evId);
+  if(!cur){
+    try{if(!ST.notifOk&&typeof Notification!=='undefined'&&Notification.permission==='default')document.getElementById('notif').classList.add('show');}catch(e){}
+    try{if(ST.notifOk||(typeof Notification!=='undefined'&&Notification.permission==='granted'))schedNotifs();}catch(e){}
+  }
+}
+
+function dimCard(dayI,evId){
+  setDim(dayI+'_'+evId);
+  var c=document.getElementById('c_'+dayI+'_'+evId);
+  if(c)c.classList.add('is-gone');
+}
+
+// ── INIT ─────────────────────────────────────────────────
+var activeDay=0;
+
+function switchDay(i){
+  document.querySelectorAll('.tab').forEach(function(t,j){t.classList.toggle('active',j===i);});
+  var prev=document.getElementById('dv_'+activeDay);
+  var next=document.getElementById('dv_'+i);
+  if(prev)prev.classList.remove('active');
+  next.querySelectorAll('.card:not(.is-gone)').forEach(function(c){c.style.animation='none';c.offsetHeight;c.style.animation='';});
+  next.classList.add('active');
+  updateProgress(i);
+  activeDay=i;
+}
+
+// Build tabs
+var tabsEl=document.getElementById('tabs');
+DAYS.forEach(function(day,i){
+  var t=document.createElement('div');
+  t.className='tab'+(i===0?' active':'');
+  t.innerHTML='<div class="tab-d">'+day.day+'</div><div class="tab-n">'+day.num+'</div>';
+  t.onclick=function(){switchDay(i);};
+  tabsEl.appendChild(t);
+});
+
+// Build views
+document.getElementById('views').innerHTML=DAYS.map(renderDay).join('');
+
+// Restore dismissed
+DAYS.forEach(function(day){
+  var all=(day.bust||[]).concat(day.last||[]).concat(day.pick||[]);
+  all.forEach(function(eid){
+    if(isDim(day.i+'_'+eid)){
+      var c=document.getElementById('c_'+day.i+'_'+eid);
+      if(c)c.classList.add('is-gone');
+    }
+  });
+});
+
+// Restore activated states
+Object.keys(ST.act).forEach(function(evId){
+  if(ST.act[evId])refreshCard(evId);
+});
+
+// Countdown updates
+setInterval(function(){
+  DAYS.forEach(function(day){
+    (day.pick||[]).forEach(function(eid){
+      var ev=EV[eid];var cd=countdown(ev);if(!cd)return;
+      var pill=document.getElementById('cd_'+day.i+'_'+eid);
+      if(pill){pill.textContent=cd==='CLOSED'?'REG CLOSED':'⏱ '+cd;pill.className='cd'+(cd==='CLOSED'?' closed':'');}
+    });
+  });
+},60000);
+
+// Auto-jump to today
+var lvNow=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'}));
+DAYS.forEach(function(day,i){
+  var d=new Date(day.date+'T12:00:00');
+  if(lvNow.toDateString()===d.toDateString())setTimeout(function(){switchDay(i);},80);
+});
+
+updateProgress(0);
+</script>
+</body>
+</html>
